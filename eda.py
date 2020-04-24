@@ -49,4 +49,6 @@ def predict_price(date):
 
 
 prediction_date = '4/24/20'
-predict_price(date)
+pred = predict_price(prediction_date)
+pred = pred[0][0]
+print("google stock price on {} will be {}".format(prediction_date,pred))
