@@ -4,7 +4,9 @@ from matplotlib import style
 from mpl_finance import candlestick_ochl
 import matplotlib.dates as mdates
 import pandas as pd 
+import pandas_datareader as pdr 
 import pandas_datareader.data as web
+
 
 style.use('ggplot')
 
@@ -17,7 +19,7 @@ df.head()
 df.shape
 df.tail(10)
 
-df.to_csv('TSLA.csv')
+# df.to_csv('TSLA.csv')
 
 
 tesla = pd.read_csv('TSLA.csv',parse_dates=True,index_col = 0)
@@ -152,7 +154,8 @@ def compile_data():
         
         if count % 10 == 0:
             print(count)
-
+    
+compile_data()
 
 
 main_df.head()
@@ -160,7 +163,7 @@ main_df.to_csv('sp500_joined_closes.csv')
 
 
 
-############### correlation table ########
+############### correlation table ########  8 
 
 def visualize_data():
     df = pd.read_csv('sp500_joined_closes.csv')
