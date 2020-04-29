@@ -22,10 +22,12 @@ style.use('ggplot')
 # these are the companies we are interested in, so we will hard code the tickers in this array 
 tickers = ['AAPL','AXP','NKE','CVX','JNJ','F','ALK']
 
+
 # variables we will need
+# datetime(year, month, day) 
 sars = 'sars'
 start_sars = dt.datetime(2002,10,1)
-end_sars = dt.datetime(2003,9,1)
+end_sars = dt.datetime(2004,1,1)
 
 swine = 'swine'
 start_swine = dt.datetime(2009,4,15)
@@ -35,8 +37,14 @@ ebola = 'ebola'
 start_ebola = dt.datetime(2013,12,1)
 end_ebola = dt.datetime(2016,1,14)
 
+corona = 'corona'
+start_corona = dt.datetime(2019,11,17)
+end_corona = dt.datetime(2020,4,24)
+
+# lina jan 22 2121
 
 
+pandemics = [sars,swine,ebola,corona]
 ######### get the data for each time period of the corresponding pandemic 
 def get_data_from_yahoo_pandemic(pandemic,start,end):
     # with open('sp500tickers.pickle','rb') as f:
@@ -69,6 +77,9 @@ get_data_from_yahoo_pandemic(swine,start_swine,end_swine)
 
 # ebola
 get_data_from_yahoo_pandemic(ebola,start_ebola,end_ebola)
+
+# corona
+get_data_from_yahoo_pandemic(corona,start_corona,end_corona)
 
 
 ########### combine each dataset into one csv
@@ -105,6 +116,8 @@ compile_data_pandemic(sars)
 compile_data_pandemic(swine)
 # ebola
 compile_data_pandemic(ebola)
+# corona
+compile_data_pandemic(corona)
 
 
 
@@ -198,8 +211,17 @@ def do_ml(pandemic,ticker):
 
     return confidence
 
+for ticker in tickers:
+    print(ticker)
+    for pandemic in pandemics:
+        print(pandemic)
+        do_ml(pandemic,ticker)
+        print('\n')
+    print('\n\n')
 
-do_ml(ebola,'JNJ')
+
+
+# do_ml(sars,'JNJ')
 
 
 
