@@ -261,8 +261,8 @@ visualize_data()
 def process_data_for_labels(ticker):
     # how many days 
     hm_days = 7 
-    # df = pd.read_csv('sp500_joined_closes.csv', index_col=0)
-    df = pd.read_csv('sars_data.csv', index_col=0)
+    df = pd.read_csv('sp500_joined_closes.csv', index_col=0)
+    # df = pd.read_csv('sars_data.csv', index_col=0)
 
     tickers = df.columns.values.tolist()
     df.fillna(0,inplace=True)
