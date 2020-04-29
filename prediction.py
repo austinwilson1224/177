@@ -6,6 +6,8 @@ import matplotlib.dates as mdates
 import pandas as pd 
 import pandas_datareader as pdr 
 import pandas_datareader.data as web
+import numpy as np
+from collections import Counter
 
 
 style.use('ggplot')
@@ -163,19 +165,163 @@ def compile_data():
 df = compile_data()
 
 
-main_df.head()
-main_df.to_csv('sp500_joined_closes.csv')
+df.head()
+df.to_csv('sp500_joined_closes.csv')
 
 
 
 ############### correlation table ########  8 
 
 def visualize_data():
-    df = pd.read_csv('sp500_joined_closes.csv')
-    df['AAPL'].plot()
+    df = pd.read_csv('sp500_joined_closes.csv',parse_dates=True)
+    # df['AAPL'].plot()
+    # plt.show()
+    df_corr = df.corr()
+
+    # print(df_corr.head())
+
+    data = df_corr.values
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+
+    heatmap = ax.pcolor(data, cmap = plt.cm.RdYlGn)
+    fig.colorbar(heatmap)
+    ax.set_xticks(np.arange(data.shape[0]) + .5, minor=False)
+    ax.set_yticks(np.arange(data.shape[1]) + .5, minor=False)
+    ax.invert_yaxis()
+    ax.xaxis.tick_top()
+
+    column_labels = df_corr.columns
+    row_labels = df_corr.index
+
+    ax.set_xticklabels(column_labels)
+    ax.set_yticklabels(row_labels)
+    plt.xticks(rotation=90)
+    heatmap.set_clim(-1,1)
+    plt.tight_layout()
     plt.show()
 
+
 visualize_data()
+
+
+
+################## preprocessing data for machine learning ########## 9 
+
+def process_data_for_labels(ticker):
+    # how many days 
+    hm_days = 7 
+    df = pd.read_csv('sp500_joined_closes.csv', index_col=0)
+    tickers = df.columns.values.tolist()
+    df.fillna(0,inplace=True)
+
+    for i in range(1, hm_days+1):
+        df['{}_{}d'.format(ticker,i)] = (df[ticker].shift(-i) - df[ticker]) / df[ticker]
+    df.fillna(0,inplace=True)
+    return tickers,df
+
+a,b=process_data_for_labels('XOM')
+
+a
+b
+
+
+
+
+
+################## machine learning target function ##### 10
+# 1 is for buy
+# -1 is for sell
+# 0 is hold
+def buy_sell_hold(*args):
+    cols = [c for c in args]
+    requirement = .02
+    for col in cols:
+        if col > requirement:
+            return 1
+        if col < -requirement:
+            return -1
+
+    return 0
+
+
+############### creating labels for machine learning ###### 11 
+
+def extract_feature_sets(ticker):
+    tickers, df = process_data_for_labels(ticker)
+    hm_days=7
+
+    df['{}_target'.format(ticker)] = list(map( buy_sell_hold, df['{}_1d'.format(ticker)],
+        df['{}_2d'.format(ticker)],
+        df['{}_3d'.format(ticker)],
+        df['{}_4d'.format(ticker)],
+        df['{}_5d'.format(ticker)],
+        df['{}_6d'.format(ticker)],
+        df['{}_7d'.format(ticker)]
+        ))
+    #list(map(buy_sell_hold, *[df['{}_{}d'.format(ticker, i)]for i in range(1, hm_days+1)]))
+
+    vals = df['{}_target'.format(ticker)].values.tolist()
+    str_vals = [str(i) for i in vals]
+    print('Data spread: ',Counter(str_vals))
+    df.fillna(0,inplace=True)
+
+    df = df.replace([np.inf, -np.inf], np.nan)
+    df.dropna(inplace=True)
+
+    df_vals = df[[ticker for ticker in tickers ]].pct_change()
+    df_vals = df_vals.replace([np.inf, -np.inf],0)
+    df_vals.fillna(0, inplace=True)
+
+    X=df_vals.values
+    y=df['{}_target'.format(ticker)].values
+
+    return X,y,df
+
+# x,y,df = extract_feature_sets('AMZN')
+# x.shape
+# y.shape
+# df
+
+
+############ machine learning ###### 12
+
+from sklearn import svm, neighbors
+from sklearn.model_selection import cross_validate
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import VotingClassifier, RandomForestClassifier
+
+def do_ml(ticker):
+    X,y,df=extract_feature_sets(ticker)
+
+    X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=.25,random_state=42)
+
+
+    # K nearest neighbors
+    clf = neighbors.KNeighborsClassifier()
+    # voting classifies
+    clf = VotingClassifier([
+        ('lsvc', svm.LinearSVC()),
+        ('knn', neighbors.KNeighborsClassifier()),
+        ('rfor', RandomForestClassifier())
+    ])
+
+
+
+    clf.fit(X_train,y_train) 
+    confidence = clf.score(X_test,y_test)
+    print('Accuracy:',confidence)
+    predictions = clf.predict(X_test)
+    print('Predicted spread:',Counter(predictions))
+
+    return confidence
+
+do_ml('AMZN')
+
+
+
+
+
 
 
 
