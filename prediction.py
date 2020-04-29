@@ -8,18 +8,16 @@ import pandas_datareader as pdr
 import pandas_datareader.data as web
 import numpy as np
 from collections import Counter
-
-
 style.use('ggplot')
 
-start = dt.datetime(2000,1,1)
-end = dt.datetime(2020,4,25)
+# start = dt.datetime(2000,1,1)
+# end = dt.datetime(2020,4,25)
 
 
-df = web.DataReader('TSLA', 'yahoo', start, end)
-df.head()
-df.shape
-df.tail(10)
+# df = web.DataReader('TSLA', 'yahoo', start, end)
+# df.head()
+# df.shape
+# df.tail(10)
 
 # df.to_csv('TSLA.csv')
 
@@ -132,6 +130,30 @@ def get_data_from_yahoo(reload_sp500=False):
 get_data_from_yahoo()
 
 
+def get_data_from_yahoo_sars():
+    # with open('sp500tickers.pickle','rb') as f:
+    #         tickers = pickle.load(f)
+    if not os.path.exists('stock_dfs_sars'):
+        os.makedirs('stock_dfs_sars')
+
+    tickers = ['AAPL','AXP','NKE','CVX','JNJ','F','ALK']
+    start = dt.datetime(2002,10,1)
+    end = dt.datetime(2003,9,1)
+
+
+    # to test use tickers[:10] so you don't have to wiat for all 500
+    for ticker in tickers:
+        print(ticker)
+        if not os.path.exists('stock_dfs_sars/{}.csv'.format(ticker)):
+            try:
+                df = web.DataReader(ticker,'yahoo',start,end)
+                df.to_csv('stock_dfs_sars/{}.csv'.format(ticker))
+            except KeyError:
+                pass
+        else:
+            print('Already have {}'.format(ticker))
+
+get_data_from_yahoo_sars()
 
 
 
@@ -161,12 +183,40 @@ def compile_data():
             print('no file')
             continue
     return main_df
+
+def compile_data_sars():
+    # with open("sp500tickers.pickle","rb") as f:
+    #     tickers = pickle.load(f)
+
+    main_df = pd.DataFrame()
+    tickers = ['AAPL','AXP','NKE','CVX','JNJ','F','ALK']
+    for count,ticker in enumerate(tickers):
+        try:
+            df = pd.read_csv('stock_dfs_sars/{}.csv'.format(ticker))
+            df.set_index('Date',inplace=True)
+
+            df.rename(columns = { 'Adj Close': ticker}, inplace=True)
+            df.drop(['Open','High','Low','Close','Volume'],1,inplace=True)
+            if main_df.empty:
+                main_df = df
+            else:
+                main_df = main_df.join(df, how = 'outer')
+            
+            if count % 10 == 0:
+                print(count)
+        except FileNotFoundError as e:
+            print('no file')
+            continue
+    return main_df
     
-df = compile_data()
+df_sars = compile_data_sars()
+
+df_sars.shape
+df_sars.head()
 
 
-df.head()
-df.to_csv('sp500_joined_closes.csv')
+# df.head()
+df_sars.to_csv('sars_data.csv')
 
 
 
@@ -211,7 +261,9 @@ visualize_data()
 def process_data_for_labels(ticker):
     # how many days 
     hm_days = 7 
-    df = pd.read_csv('sp500_joined_closes.csv', index_col=0)
+    # df = pd.read_csv('sp500_joined_closes.csv', index_col=0)
+    df = pd.read_csv('sars_data.csv', index_col=0)
+
     tickers = df.columns.values.tolist()
     df.fillna(0,inplace=True)
 
@@ -220,10 +272,10 @@ def process_data_for_labels(ticker):
     df.fillna(0,inplace=True)
     return tickers,df
 
-a,b=process_data_for_labels('XOM')
+# a,b=process_data_for_labels('XOM')
 
-a
-b
+# a
+# b
 
 
 
@@ -316,7 +368,39 @@ def do_ml(ticker):
 
     return confidence
 
+# sars 
+do_ml('AAPL')
+do_ml('ALK')
+do_ml('AXP')
+do_ml('CVX')
+do_ml('F')
+do_ml('JNJ')
+do_ml('NKE')
+
+
+
+
+
+
 do_ml('AMZN')
+do_ml('GOOG')
+do_ml('JNJ')
+do_ml('KR')
+do_ml('AXP')
+do_ml('NIKE')
+do_ml('INTC')
+do_ml('AMD')
+do_ml('ALK')
+do_ml('AMAT')
+do_ml('ADSK')
+do_ml('BBY')
+do_ml('CAH')
+do_ml('GM')
+do_ml('KHC')
+do_ml('LVS')
+do_ml('NDAQ')
+do_ml('NFLX')
+do_ml('PFE')
 
 
 
