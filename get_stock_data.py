@@ -46,6 +46,7 @@ def get_data_from_yahoo(reload_sp500=False):
 
 
     # to test use tickers[:10] so you don't have to wiat for all 500
+    
     for ticker in tickers:
         print(ticker)
         if not os.path.exists('stock_dfs/{}.csv'.format(ticker)):
