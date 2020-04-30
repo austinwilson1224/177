@@ -222,6 +222,3 @@ for ticker in tickers:
 
 
 # do_ml(sars,'JNJ')
-
-
-
